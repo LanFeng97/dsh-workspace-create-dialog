@@ -4,22 +4,7 @@
 
 给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的**创建工作区对话框**：填个名字就能开，或者选文件夹——而那个选择窗口终于会记得你上次在哪。
 
-```
-  创建工作区
-  ──────────────────────────────────────────────────────────
-  工作区名称
-  [ my-project                                             ]
-
-  工作区文件夹
-  [ 未选择（将自动新建） ]                      [ 选择文件夹… ]
-    不选文件夹时，会按下面的「新建位置」新建一个同名文件夹。
-
-  新建位置
-  [ D:\Work\Workspaces                          ] [ 更改… ]
-    只填名称时，工作区文件夹建在这里；以后一直用它，直到你再次更改。
-
-                                    [ 取消 ]  [ 创建 ]
-```
+![创建工作区对话框：工作区名称输入框、带「选择文件夹…」的工作区文件夹行、带「更改…」的新建位置行](docs/create-workspace.png)
 
 ## 它能做什么
 
@@ -45,9 +30,26 @@
 
 ## 安装
 
-### 从插件市场（收录后推荐）
+### 让 AI 帮你装（最省事）
 
-在 [dshmarket](https://github.com/dsh-market/dsh-market) 里搜 **dsh-workspace-create-dialog**，一键安装。上架还差一个 [PR](contrib/awesome-dsh-plugin/) 到 [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin)（他们的 CI 要求仓库至少存在一天），在那之前请用下面的手动方式。
+把下面这段发给任意一个 DSH 会话，剩下的交给它，装完它会告诉你去重启：
+
+```text
+请把 https://github.com/LanFeng97/dsh-workspace-create-dialog 这个 DSH 插件装进我的 DSH：
+
+1. 把仓库克隆到 DSH home 之外的任意目录。
+2. 在该目录运行：node tools/install.mjs
+   它会把包拷进 $DSH_HOME/profiles/<profile>/node_modules/，并在该 profile 的
+   cordis.patch.yml 末尾追加一条 loader 行。想知道它到底动了什么，先读一遍这个脚本。
+3. 除这两个位置外，不要改动 profile 里的任何内容。
+4. 完成后告诉我需要重启 DeepSeek Harness（宿主半区是 Node 模块，只在启动时加载）。
+```
+
+如果你的 AI 跑在沙箱里，第 2 步会需要一次写入 DSH home 的授权——那一次批准是预期内的。
+
+### 从插件市场（收录后）
+
+在 [dshmarket](https://github.com/dsh-market/dsh-market) 里搜 **dsh-workspace-create-dialog**，一键安装。上架还差一个 [PR](contrib/awesome-dsh-plugin/) 到 [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin)（他们的 CI 要求仓库至少存在一天），在那之前请用上面的方式或下面的手动方式。
 
 ### 从本仓库手动安装
 
@@ -62,6 +64,8 @@ node tools/install.mjs
 **然后重启一次 DeepSeek Harness**（宿主半区是 Node 模块，只重载配置不会重新 import）。之后改 `lib/client.js` 只需刷新页面，改 `lib/index.js` 仍需重启。
 
 `node tools/install.mjs --dry-run` 只打印会做什么，不写任何文件。
+
+**不需要发 npm**：市场同样从 GitHub 安装，发不发布都不影响收录。
 
 ## 它是怎么做到的
 

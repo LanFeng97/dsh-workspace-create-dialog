@@ -4,23 +4,7 @@
 
 A **Create Workspace** dialog for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness): type a name and go, or pick a folder with a chooser that finally remembers where you were.
 
-```
-  Create Workspace
-  ──────────────────────────────────────────────────────────
-  Workspace name
-  [ my-project                                             ]
-
-  Workspace folder
-  [ Not selected (a new folder will be created) ] [ Choose folder… ]
-    With no folder chosen, a folder named after the workspace is created
-    at the location below.
-
-  New workspace location
-  [ D:\Work\Workspaces                          ] [ Change… ]
-    Name-only creations put their folder here; it stays until you change it.
-
-                                    [ Cancel ]  [ Create ]
-```
+![The Create Workspace dialog: a name field, a workspace folder row with a Choose folder button, and a New workspace location row with a Change button](docs/create-workspace.png)
 
 ## What it does
 
@@ -46,9 +30,28 @@ Clicking **Add workspace…** in DSH today opens the OS folder dialog immediatel
 
 ## Install
 
-### From the plugin market (recommended, once listed)
+### Let your agent install it (easiest)
 
-Search for **dsh-workspace-create-dialog** in [dshmarket](https://github.com/dsh-market/dsh-market) and install it in one click. The listing is [pending a PR](contrib/awesome-dsh-plugin/) to [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) (their CI requires the repository to be at least one day old); until it lands, use the manual route below.
+Paste this into any DSH session — the agent does the whole thing and tells you when to restart:
+
+```text
+Install the DSH plugin from https://github.com/LanFeng97/dsh-workspace-create-dialog into my DSH:
+
+1. Clone the repository to any folder outside my DSH home.
+2. In that folder run: node tools/install.mjs
+   It copies the package into $DSH_HOME/profiles/<profile>/node_modules/ and appends one
+   loader line to that profile's cordis.patch.yml. Read the script first if you want to know
+   exactly what it touches.
+3. Change nothing else in the profile.
+4. When it is done, tell me to restart DeepSeek Harness (the host half is a Node module and
+   only loads at startup).
+```
+
+If your agent runs sandboxed, it will need write access to your DSH home for step 2 — that one approval is expected.
+
+### From the plugin market (once listed)
+
+Search for **dsh-workspace-create-dialog** in [dshmarket](https://github.com/dsh-market/dsh-market) and install it in one click. The listing is [pending a PR](contrib/awesome-dsh-plugin/) to [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) (their CI requires the repository to be at least one day old); until it lands, use the routes above and below.
 
 ### Manual install from this repository
 
@@ -63,6 +66,8 @@ That copies the package into your DSH profile's `node_modules` and appends one l
 **Then restart DeepSeek Harness** (the host half is a Node module, so a config reload alone will not import it). After that, changing `lib/client.js` only needs a page refresh; changing `lib/index.js` still needs a restart.
 
 `node tools/install.mjs --dry-run` prints what it would do without writing anything.
+
+Publishing to npm is **not** required: the market installs from GitHub exactly the same way, and listing is unaffected either way.
 
 ## How it works
 
