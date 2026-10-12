@@ -1,6 +1,6 @@
 {
   "name": "dsh-workspace-create-dialog",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "DSH 创建工作区对话框：上面填名称，下面选文件夹；只填名称就在「新建位置」下建出同名文件夹，选文件夹则弹出自己调的原生 IFileDialog 并延续上次所在的目录。 · A Codex-style Create Workspace dialog for DeepSeek Harness: name it and go, or pick a folder with a chooser that remembers where you were.",
   "license": "MIT",
   "author": "LanFeng97",

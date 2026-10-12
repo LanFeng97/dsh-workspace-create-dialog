@@ -10,10 +10,10 @@
  * 4. 宿主半区的三条路由与浏览器半区的字面量是否一致，以及建目录路由的真实行为。
  */
 import { strict as assert } from 'node:assert'
-import { mkdtemp, readFile, rm, stat } from 'node:fs/promises'
+import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { Readable } from 'node:stream'
-import { tmpdir } from 'node:os'
+import { homedir, tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { joinName, lastSegment, validateName } from '../lib/name.js'
@@ -23,6 +23,21 @@ import * as host from '../lib/index.js'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(HERE, '..')
+
+/**
+ * 自测绝不能碰真实状态。
+ *
+ * `host.apply()` 不传 `stateFile` 时会默认写到 `$DSH_HOME/storages/<插件>/state.json`。
+ * 早先的版本正因为某个用例漏传，把测试里的字面量（`D:\配置的初始位置`）写进了
+ * 真实状态文件——界面上「新建位置」于是显示出一个根本不存在的目录。
+ *
+ * 现在两道保险：先把 `DSH_HOME` 指到临时目录（漏传也只会污染临时目录），
+ * 再在末尾断言真实状态文件与开跑前逐字节一致。
+ */
+const realStatePath = join(process.env.DSH_HOME?.trim() || join(homedir(), '.dsh'), 'storages', 'dsh-workspace-create-dialog', 'state.json')
+const realStateBefore = await readFile(realStatePath, 'utf8').catch(() => null)
+const sandboxHome = await mkdtemp(join(tmpdir(), 'dsh-wcd-home-'))
+process.env.DSH_HOME = sandboxHome
 
 /** 断言通过的用例数。 */
 let passed = 0
@@ -656,18 +671,46 @@ await test('建目录路由真的建出目录，并拒绝非法名称', async ()
   }
 })
 await test('配置路由回的是解析后的新建位置', async () => {
+  const sandbox = await mkdtemp(join(tmpdir(), 'dsh-wcd-seed-'))
   const routes = new Map()
   const ctx = {
     logger: { warn: () => {} },
     effect: (body) => { body() },
     webServer: { register: (route) => { routes.set(route.path, route); return () => {} } },
   }
-  // 显式给一个配置值，等价于「profile patch 里的初始值」
-  host.apply(ctx, { baseDir: 'D:\\配置的初始位置' })
+  // 显式给一个配置值，等价于「profile patch 里的初始值」；状态文件也显式给，别落到真实目录
+  host.apply(ctx, { baseDir: 'D:\\配置的初始位置', stateFile: join(sandbox, 'state.json') })
   const res = fakeResponse()
   await routes.get(host.ROUTES.config).handler(fakeRequest({ method: 'GET' }), res)
   assert.equal(res.payload.baseDir, 'D:\\配置的初始位置')
   assert.equal(typeof res.payload.lastDir, 'string')
+})
+await test('状态文件里的新建位置不是绝对路径时，重新解析而不是照用', async () => {
+  const sandbox = await mkdtemp(join(tmpdir(), 'dsh-wcd-bad-'))
+  const stateFile = join(sandbox, 'state.json')
+  // 手改坏的状态文件。注意：这不是当初那次污染的成因——那个值是 D:\配置的初始位置，
+  // 它本身是合法绝对路径，任何「合法性校验」都拦不住；拦住它的是上面把 DSH_HOME
+  // 指到临时目录，以及末尾那条「真实状态文件没被动过」的断言。这里守的是另一件事：
+  // 相对路径会被当成「相对宿主的当前目录」，从而在莫名其妙的地方建目录。
+  await writeFile(stateFile, `${JSON.stringify({ version: 1, baseDir: 'relative\\dir', lastDir: '' })}\n`, 'utf8')
+  const routes = new Map()
+  const ctx = {
+    logger: { warn: () => {} },
+    effect: (body) => { body() },
+    webServer: { register: (route) => { routes.set(route.path, route); return () => {} } },
+    get: () => undefined,
+  }
+  host.apply(ctx, { stateFile })
+  try {
+    const res = fakeResponse()
+    await routes.get(host.ROUTES.config).handler(fakeRequest({ method: 'GET' }), res)
+    assert.equal(isAbsoluteDir(res.payload.baseDir), true, `应回退到解析结果，实际：${res.payload.baseDir}`)
+    // 而且要把修正后的值写回，别每次启动都重算
+    const persisted = JSON.parse(await readFile(stateFile, 'utf8'))
+    assert.equal(persisted.baseDir, res.payload.baseDir)
+  } finally {
+    await rm(sandbox, { recursive: true, force: true })
+  }
 })
 await test('未配置时新建位置会落到一个绝对路径（默认工作区根目录或兜底）', async () => {
   const routes = new Map()
@@ -730,6 +773,20 @@ await test('包名在三处声明里一致', async () => {
   assert.equal(pkg.main, 'lib/index.js')
   assert.equal(pkg.exports['./client'], './lib/client.js')
   assert.ok(existsSync(join(ROOT, pkg.main)))
+})
+
+console.log('测试环境隔离')
+await test('自测没有创建或改写真实状态文件', async () => {
+  // 这一条就是当初那个 bug 的回归闸门：某个用例漏传 stateFile 时，它会写进真实
+  // 状态文件、并在界面上显示成一个不存在的目录。改了前后逐字节比对，一次就抓住。
+  const realStateAfter = await readFile(realStatePath, 'utf8').catch(() => null)
+  assert.equal(realStateAfter, realStateBefore, `自测改动了真实状态文件：${realStatePath}`)
+  // 顺带确认隔离确实生效：默认 stateFile 现在落在临时目录里
+  assert.equal(process.env.DSH_HOME, sandboxHome)
+})
+await test('临时 DSH home 用完即弃', async () => {
+  await rm(sandboxHome, { recursive: true, force: true })
+  assert.equal(existsSync(sandboxHome), false)
 })
 
 console.log(`\n全部通过：${passed} 个用例`)

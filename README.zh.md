@@ -148,7 +148,7 @@ C# 方法声明的顺序必须与 COM vtable 一致（`Show=3`、`SetOptions=9`�
 ## 开发
 
 ```sh
-node tools/selftest.mjs           # 37 条自测，不需要 DSH 运行时
+node tools/selftest.mjs           # 40 条自测，不需要 DSH 运行时
 node tools/pick-probe.mjs         # 原生选择器：编译 C#、走完 COM 链路，不弹窗
 node tools/pick-probe.mjs --real  # 同上，但真的弹窗，用来看观感
 node tools/install.mjs --dry-run  # 只打印安装脚本会做什么

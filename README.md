@@ -149,7 +149,7 @@ The state file holds two fields: `baseDir` (the location) and `lastDir` (where t
 ## Development
 
 ```sh
-node tools/selftest.mjs           # 37 checks, no DSH runtime needed
+node tools/selftest.mjs           # 40 checks, no DSH runtime needed
 node tools/pick-probe.mjs         # native picker: compiles the C#, exercises the COM chain, no window
 node tools/pick-probe.mjs --real  # same, but actually opens the dialog so you can look at it
 node tools/install.mjs --dry-run  # what the installer would do
