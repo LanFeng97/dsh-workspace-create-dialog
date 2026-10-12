@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-label="Create Workspace">
+  <!-- 文件夹 + 加号：一眼看出「新建一个工作区目录」 -->
+  <path fill="#4D6BFE" d="M3.2 6.6c0-1.1.9-2 2-2h3.3c.5 0 1 .2 1.4.6l1.2 1.2h7.7c1.1 0 2 .9 2 2v9c0 1.1-.9 2-2 2H5.2c-1.1 0-2-.9-2-2V6.6Z"/>
+  <path fill="#fff" d="M12 9.6h-1.6v2.6H7.8v1.6h2.6v2.6H12v-2.6h2.6v-1.6H12V9.6Z"/>
+</svg>

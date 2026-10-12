@@ -1,0 +1,60 @@
+{
+  "name": "dsh-workspace-create-dialog",
+  "version": "0.1.0",
+  "description": "DSH 创建工作区对话框：上面填名称，下面选文件夹；只填名称就在「新建位置」下建出同名文件夹，选文件夹则弹出自己调的原生 IFileDialog 并延续上次所在的目录。 · A Codex-style Create Workspace dialog for DeepSeek Harness: name it and go, or pick a folder with a chooser that remembers where you were.",
+  "license": "MIT",
+  "author": "LanFeng97",
+  "keywords": [
+    "deepseek",
+    "harness",
+    "dsh",
+    "dsh-plugin",
+    "workspace",
+    "plugin"
+  ],
+  "icon": "icon.svg",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LanFeng97/dsh-workspace-create-dialog.git"
+  },
+  "homepage": "https://github.com/LanFeng97/dsh-workspace-create-dialog#readme",
+  "bugs": {
+    "url": "https://github.com/LanFeng97/dsh-workspace-create-dialog/issues"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "test": "node tools/selftest.mjs",
+    "probe": "node tools/pick-probe.mjs",
+    "install:local": "node tools/install.mjs"
+  },
+  "dsh": {
+    "engines": {
+      "dsh": ">=0.2.0-rc.2 <0.3.0 || >=0.3.0-0"
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-renderer",
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-workspace"
+      ],
+      "platform": "web"
+    }
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "icon.svg"
+  ]
+}
