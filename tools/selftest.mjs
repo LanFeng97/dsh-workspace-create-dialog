@@ -20,6 +20,7 @@ import { joinName, lastSegment, validateName } from '../lib/name.js'
 import { DEFAULT_WORKSPACE_DIRNAME, isAbsoluteDir, parentOf, resolveBaseDir } from '../lib/base-dir.js'
 import { buildScript, encodedCommand, powershellPath } from '../lib/pick-folder.js'
 import * as host from '../lib/index.js'
+import { stripOurLoaderRow } from './install.mjs'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(HERE, '..')
@@ -773,6 +774,51 @@ await test('包名在三处声明里一致', async () => {
   assert.equal(pkg.main, 'lib/index.js')
   assert.equal(pkg.exports['./client'], './lib/client.js')
   assert.ok(existsSync(join(ROOT, pkg.main)))
+})
+
+console.log('tools/install.mjs：卸载时如何摘掉 loader 行')
+// 用真实的 profile patch 形状当夹具：先有若干手写条目，然后是我们那段，
+// 后面还跟着另一个插件的条目（本机 patch 里就是 dsh-session-cost）。
+const PATCH_FIXTURE = [
+  '# Your patch layer for this dsh profile',
+  '- id: ui-chat',
+  '  name: "@deepseek-ai/dsh-client-ui-chat"',
+  '  config:',
+  '    transcriptView: standard',
+  '',
+  '# dsh-workspace-create-dialog: 创建工作区对话框（名称 + 文件夹，原生选择器可延续上次所在的目录）',
+  '- insert:',
+  '    - id: ui-workspace-create-dialog',
+  "      name: 'dsh-workspace-create-dialog'",
+  '      # 想固定「新建位置」就取消下一行的注释（不写则由插件自动决定，界面里也能改）',
+  '      # config:',
+  "      #   baseDir: 'D:\\Work\\Workspaces'",
+  '',
+  '- insert:',
+  '    - id: ui-session-cost',
+  "      name: 'dsh-session-cost'",
+  '',
+].join('\n')
+await test('只摘掉本插件那段，后面别人的条目原样保留', () => {
+  const { text, removed } = stripOurLoaderRow(PATCH_FIXTURE, 'dsh-workspace-create-dialog')
+  assert.equal(removed, true)
+  assert.ok(!text.includes('dsh-workspace-create-dialog'), '本插件的名字不该留下')
+  assert.ok(text.includes("name: 'dsh-session-cost'"), '后面那条必须完好')
+  assert.ok(text.includes('    - id: ui-session-cost'), '缩进也要保持')
+  assert.ok(text.includes('- id: ui-chat'), '前面的手写条目不受影响')
+  assert.ok(text.includes('transcriptView: standard'))
+  assert.ok(!text.includes('# 想固定「新建位置」'), '我们那段的注释一起走')
+})
+await test('没有本插件时不动文件', () => {
+  const { text, removed } = stripOurLoaderRow(PATCH_FIXTURE.replace(/dsh-workspace-create-dialog/g, 'someone-else'), 'dsh-workspace-create-dialog')
+  assert.equal(removed, false)
+  assert.equal(text, PATCH_FIXTURE.replace(/dsh-workspace-create-dialog/g, 'someone-else'))
+})
+await test('只装了本插件时留下干净的收尾', () => {
+  // 前 14 行 = 手写条目 + 我们那段（后面那条别人的条目不在其中）
+  const only = stripOurLoaderRow(PATCH_FIXTURE.split('\n').slice(0, 14).join('\n'), 'dsh-workspace-create-dialog')
+  assert.equal(only.removed, true)
+  assert.equal(only.text, '# Your patch layer for this dsh profile\n- id: ui-chat\n  name: "@deepseek-ai/dsh-client-ui-chat"\n  config:\n    transcriptView: standard\n')
 })
 
 console.log('测试环境隔离')

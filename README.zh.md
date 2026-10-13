@@ -30,22 +30,27 @@
 
 ## 安装
 
-### 让 AI 帮你装（最省事）
+### 在 Harness 界面里直接装（最简单）
 
-把下面这段发给任意一个 DSH 会话，剩下的交给它，装完它会告诉你去重启：
+侧栏 → **插件** → **添加插件**，把这个地址填进去，点**安装**，再点**立即启用**：
 
 ```text
-请把 https://github.com/LanFeng97/dsh-workspace-create-dialog 这个 DSH 插件装进我的 DSH：
-
-1. 把仓库克隆到 DSH home 之外的任意目录。
-2. 在该目录运行：node tools/install.mjs
-   它会把包拷进 $DSH_HOME/profiles/<profile>/node_modules/，并在该 profile 的
-   cordis.patch.yml 末尾追加一条 loader 行。想知道它到底动了什么，先读一遍这个脚本。
-3. 除这两个位置外，不要改动 profile 里的任何内容。
-4. 完成后告诉我需要重启 DeepSeek Harness（宿主半区是 Node 模块，只在启动时加载）。
+https://github.com/LanFeng97/dsh-workspace-create-dialog
 ```
 
-如果你的 AI 跑在沙箱里，第 2 步会需要一次写入 DSH home 的授权——那一次批准是预期内的。
+那个输入框接受包名、Git 地址、压缩包或本地绝对路径。仓库地址能用，是因为本包声明了 `dsh.bundle` patch——DSH 安装前正是检查这一条。装完如果没立刻生效，重启一次 DeepSeek Harness。
+
+两点要知道：它是直接从 GitHub 下载的，所以 GitHub 得能连上（**改用国内镜像**只覆盖注册表里的包，不代替仓库下载）；另外 DSH 目前不自动更新第三方插件，升级要先卸载再装新版。
+
+> 之前用下面的 `tools/install.mjs` 装过的话，先跑 `node tools/install.mjs --uninstall`，免得 profile 里同一个 id 留下两条 loader 行。
+
+### 让 AI 装（一行提示词）
+
+不想手点就发这句：
+
+```text
+把 https://github.com/LanFeng97/dsh-workspace-create-dialog 这个 DSH 插件装进我的 DSH，装好告诉我什么时候重启。
+```
 
 ### 从插件市场（收录后）
 
@@ -63,7 +68,7 @@ node tools/install.mjs
 
 **然后重启一次 DeepSeek Harness**（宿主半区是 Node 模块，只重载配置不会重新 import）。之后改 `lib/client.js` 只需刷新页面，改 `lib/index.js` 仍需重启。
 
-`node tools/install.mjs --dry-run` 只打印会做什么，不写任何文件。
+`node tools/install.mjs --dry-run` 只打印会做什么，不写任何文件；`--uninstall` 反过来删掉包与那条 loader 行。
 
 **不需要发 npm**：市场同样从 GitHub 安装，发不发布都不影响收录。
 

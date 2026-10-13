@@ -30,24 +30,27 @@ Clicking **Add workspace…** in DSH today opens the OS folder dialog immediatel
 
 ## Install
 
-### Let your agent install it (easiest)
+### From the DSH UI (simplest)
 
-Paste this into any DSH session — the agent does the whole thing and tells you when to restart:
+Sidebar → **Plugins** → **Add plugin**, paste this address, click **Install**, then **Enable now**:
 
 ```text
-Install the DSH plugin from https://github.com/LanFeng97/dsh-workspace-create-dialog into my DSH:
-
-1. Clone the repository to any folder outside my DSH home.
-2. In that folder run: node tools/install.mjs
-   It copies the package into $DSH_HOME/profiles/<profile>/node_modules/ and appends one
-   loader line to that profile's cordis.patch.yml. Read the script first if you want to know
-   exactly what it touches.
-3. Change nothing else in the profile.
-4. When it is done, tell me to restart DeepSeek Harness (the host half is a Node module and
-   only loads at startup).
+https://github.com/LanFeng97/dsh-workspace-create-dialog
 ```
 
-If your agent runs sandboxed, it will need write access to your DSH home for step 2 — that one approval is expected.
+That box takes a package name, a Git address, a tarball or a local absolute path. A repository URL works because this package ships a `dsh.bundle` patch — DSH checks exactly that before it installs. Restart DeepSeek Harness if the plugin does not come up.
+
+Two things worth knowing: it downloads straight from GitHub, so GitHub has to be reachable (the China-mirror option only covers registry packages, not repository downloads); and DSH does not auto-update third-party plugins yet — upgrading means uninstall + install again.
+
+> Already installed with `tools/install.mjs` below? Run `node tools/install.mjs --uninstall` first, so the profile does not end up with two loader rows for the same id.
+
+### One-line prompt for your agent
+
+If you would rather not click through it:
+
+```text
+Install the DSH plugin at https://github.com/LanFeng97/dsh-workspace-create-dialog into my DSH and tell me when to restart.
+```
 
 ### From the plugin market (once listed)
 
@@ -65,7 +68,7 @@ That copies the package into your DSH profile's `node_modules` and appends one l
 
 **Then restart DeepSeek Harness** (the host half is a Node module, so a config reload alone will not import it). After that, changing `lib/client.js` only needs a page refresh; changing `lib/index.js` still needs a restart.
 
-`node tools/install.mjs --dry-run` prints what it would do without writing anything.
+`node tools/install.mjs --dry-run` prints what it would do without writing anything; `--uninstall` removes the package and its loader row again.
 
 Publishing to npm is **not** required: the market installs from GitHub exactly the same way, and listing is unaffected either way.
 
